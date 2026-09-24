@@ -29,7 +29,9 @@ The project is structured as a monorepo containing three main parts:
 ## Deployment
 
 ### Mobile Applications
-Compiled APKs for both the student and admin applications are available in the `Releases/` directory.
+**📥 Download the Apps:** Compiled APKs for both the student and admin applications are available to download on the [GitHub Releases Page](https://github.com/anonyemichael/CESA-DUES/releases/latest).
+
+You can directly download and install them on any Android device.
 
 To build the applications from source:
 ```bash
