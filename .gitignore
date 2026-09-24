@@ -1,0 +1,54 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+build/
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Node/Firebase
+node_modules/
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+functions/lib/
+functions/node_modules/
+
+# Android
+**/android/local.properties
+**/android/key.properties
+*.jks
+*.keystore
+
+# iOS
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+
+# Secrets
+.env
+functions/.env
+
+# Large binaries
+Releases/
+*.apk
+*.aab

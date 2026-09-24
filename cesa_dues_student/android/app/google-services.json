@@ -1,0 +1,126 @@
+{
+  "project_info": {
+    "project_number": "1084970177493",
+    "project_id": "cesa-dues-9a267",
+    "storage_bucket": "cesa-dues-9a267.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084970177493:android:dde015f5036b6fe132635c",
+        "android_client_info": {
+          "package_name": "com.cesa.cesa_dues_admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAZXJG3cGq1vC68YtQJvj_25_lKJNT6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084970177493:android:471069b26cf43c4a32635c",
+        "android_client_info": {
+          "package_name": "com.cesa.cesa_dues_student"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAZXJG3cGq1vC68YtQJvj_25_lKJNT6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084970177493:android:0b25909a771023c432635c",
+        "android_client_info": {
+          "package_name": "com.cesadues.admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAZXJG3cGq1vC68YtQJvj_25_lKJNT6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084970177493:android:0122550bf852e6f732635c",
+        "android_client_info": {
+          "package_name": "com.cesadues.student"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAZXJG3cGq1vC68YtQJvj_25_lKJNT6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084970177493-t1gnoam3cddjgodpbol06l22nio9kb8b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

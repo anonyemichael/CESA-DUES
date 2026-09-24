@@ -1,0 +1,8 @@
+name: cesa_dues_workspace
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - cesa_dues_core
+  - cesa_dues_student
+  - cesa_dues_admin

@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "cesa-dues-9a267"
+  },
+  "targets": {
+    "cesa-dues-9a267": {
+      "hosting": {
+        "admin": [
+          "cesa-dues-9a267"
+        ],
+        "student": [
+          "cesa-dues-student"
+        ]
+      }
+    }
+  }
+}
