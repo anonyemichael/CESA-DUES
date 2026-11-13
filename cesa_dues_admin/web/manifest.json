@@ -1,11 +1,11 @@
 {
-    "name": "CESA DUES Admin Portal",
-    "short_name": "CESA Admin",
+    "name": "ACES DUES Admin Portal",
+    "short_name": "ACES Admin",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#0A2A52",
+    "description": "Admin portal for the Association of Computer Engineering Students (UENR): students, dues, payments and reports.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

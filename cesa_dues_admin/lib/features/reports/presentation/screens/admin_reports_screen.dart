@@ -341,7 +341,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.02),
+            color: Color.fromRGBO(10, 42, 82, 0.02),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -480,7 +480,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.02),
+            color: Color.fromRGBO(10, 42, 82, 0.02),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -542,7 +542,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: const Color(0xFF0A2A52),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: const [
                   BoxShadow(
@@ -605,7 +605,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   const SizedBox(width: 8),
                   TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E293B),
+                      backgroundColor: const Color(0xFF163D73),
                       foregroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       minimumSize: Size.zero,
@@ -619,13 +619,13 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                         try {
                           final result = await OpenFilex.open(xFile.path);
                           if (result.type != ResultType.done) {
-                            await Share.shareXFiles([xFile], subject: 'CESA Dues Report');
+                            await Share.shareXFiles([xFile], subject: '${AppConstants.organizationName} Dues Report');
                           }
                         } catch (_) {
-                          await Share.shareXFiles([xFile], subject: 'CESA Dues Report');
+                          await Share.shareXFiles([xFile], subject: '${AppConstants.organizationName} Dues Report');
                         }
                       } else {
-                        await Share.shareXFiles([xFile], subject: 'CESA Dues Report');
+                        await Share.shareXFiles([xFile], subject: '${AppConstants.organizationName} Dues Report');
                       }
                     },
                     child: Text(kIsWeb ? 'SAVED' : 'OPEN', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
@@ -693,7 +693,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
       final csvString = const ListToCsvConverter().convert(rows);
       final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final fileName = 'CESA_Dues_Report_$dateStr.csv';
+      final fileName = '${AppConstants.organizationName}_Dues_Report_$dateStr.csv';
       final bytes = utf8.encode(csvString);
 
       final xFile = XFile.fromData(

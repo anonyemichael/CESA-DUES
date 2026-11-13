@@ -20,9 +20,11 @@ class StorageService {
   final FirebaseStorage _storage;
 
   /// Uploads student ID bytes (cross-platform Web + Mobile) and returns the download URL.
-  Future<String> uploadStudentIdBytes(String indexNumber, Uint8List imageBytes) async {
+  /// The photo is stored under the student's Firebase uid so the Storage rules can
+  /// confirm ownership from the sign-in token alone.
+  Future<String> uploadStudentIdBytes(String uid, String indexNumber, Uint8List imageBytes) async {
     try {
-      final path = 'students/$indexNumber/id_photo.jpg';
+      final path = 'idCards/$uid/id_photo.jpg';
       final ref = _storage.ref().child(path);
 
       final metadata = SettableMetadata(

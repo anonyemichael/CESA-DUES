@@ -1,5 +1,5 @@
 name: cesa_dues_admin
-description: "CESA DUES Admin Portal — HOD & Financial Secretary Management Interface"
+description: "ACES DUES Admin Portal — HOD & Financial Secretary management interface (UENR Computer Engineering)"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -59,11 +59,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
-  image_path: "assets/images/logo.jpg"
+  image_path: "assets/images/logo.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo.jpg"
+  adaptive_icon_foreground: "assets/images/logo.png"
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/logo.jpg
+    - assets/images/logo.png

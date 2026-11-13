@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cesa_dues_core/cesa_dues_core.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -21,7 +22,7 @@ class RoleSelectionScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'CESA DUES',
+                  AppConstants.appName,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w800,

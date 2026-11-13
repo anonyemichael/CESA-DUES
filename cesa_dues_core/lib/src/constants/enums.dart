@@ -1,4 +1,4 @@
-// Application-wide enumerations for CESA DUES.
+// Application-wide enumerations for ACES DUES.
 
 /// User roles in the system.
 enum UserRole {

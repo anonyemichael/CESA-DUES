@@ -23,7 +23,7 @@ class AdminShell extends StatelessWidget {
               indicatorColor: AppColors.primary.withOpacity(0.2),
               leading: Padding(
                 padding: const EdgeInsets.only(bottom: 24, top: 16),
-                child: Image.asset('assets/images/logo.jpg', width: 48, errorBuilder: (c,e,s) => const Icon(Icons.admin_panel_settings, size: 48)),
+                child: Image.asset('assets/images/logo.png', width: 48, errorBuilder: (c,e,s) => const Icon(Icons.admin_panel_settings, size: 48)),
               ),
               destinations: const [
                 NavigationRailDestination(

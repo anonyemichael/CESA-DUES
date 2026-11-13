@@ -1,5 +1,10 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { BRAND } from './brand';
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 // Triggered when a payment document is created or updated
 export const sendPaymentNotification = functions.firestore
@@ -19,11 +24,11 @@ export const sendPaymentNotification = functions.firestore
     const indexNumber = after.studentId;
 
     // Get the student's FCM token
-    const studentQuery = await admin.firestore().collection('students').where('indexNumber', '==', indexNumber).limit(1).get();
-    
-    if (studentQuery.empty) return null;
-    
-    const student = studentQuery.docs[0].data();
+    const studentDoc = await admin.firestore().collection('students').doc(indexNumber).get();
+
+    if (!studentDoc.exists) return null;
+
+    const student = studentDoc.data()!;
     const fcmToken = student.fcmToken;
 
     if (!fcmToken) {
@@ -34,7 +39,7 @@ export const sendPaymentNotification = functions.firestore
     const payload = {
       notification: {
         title: 'Payment Successful! 🎉',
-        body: `Your payment of GHS ${after.amount} was received successfully.`,
+        body: `Your payment of ${BRAND.currency} ${(Number(after.amount) / 100).toFixed(2)} was received successfully.`,
       },
       data: {
         type: 'PAYMENT_RECEIPT',
@@ -77,7 +82,7 @@ export const sendVerificationNotification = functions.firestore
     const payload = {
       notification: {
         title: 'ID Verified! ✅',
-        body: `Your CESA student identity has been verified. You can now pay your dues.`,
+        body: `Your ${BRAND.organization} student identity has been verified. You can now pay your dues.`,
       },
       data: {
         type: 'VERIFICATION_SUCCESS',

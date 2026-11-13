@@ -4,6 +4,7 @@ import '../models/student.dart';
 import '../constants/firestore_paths.dart';
 import '../constants/enums.dart';
 import '../errors/app_exception.dart';
+import '../constants/app_constants.dart';
 
 /// Provider for the Firestore instance.
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
@@ -87,7 +88,7 @@ class StudentRepository {
         };
         if (fullName != null && fullName.isNotEmpty) {
           final currentName = existing?['fullName'] as String?;
-          if (currentName == null || currentName.isEmpty || currentName == 'Student' || currentName == 'Civil Engineering Student') {
+          if (currentName == null || currentName.isEmpty || currentName == 'Student' || currentName == 'Civil Engineering Student' || currentName == AppConstants.defaultStudentName) {
             updates['fullName'] = fullName;
           }
         }
@@ -102,8 +103,8 @@ class StudentRepository {
         // New Student not yet on roster -> Create profile
         await docRef.set({
           'indexNumber': cleanIndex,
-          'fullName': (fullName != null && fullName.isNotEmpty) ? fullName : 'Civil Engineering Student',
-          'programme': programme ?? 'BSc. Civil Engineering',
+          'fullName': (fullName != null && fullName.isNotEmpty) ? fullName : AppConstants.defaultStudentName,
+          'programme': programme ?? AppConstants.programmeName,
           'level': (level != null && level > 0) ? level : 100,
           'academicYear': '2025/2026',
           'linkedUid': uid,

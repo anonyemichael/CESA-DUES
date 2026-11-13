@@ -1,114 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/payment.dart';
-import '../models/student.dart';
-import '../models/dues.dart';
-import '../models/notification_model.dart';
-import '../constants/enums.dart';
 import '../constants/firestore_paths.dart';
 import '../errors/app_exception.dart';
 
-/// Provider for FirebaseFunctions
-final firebaseFunctionsProvider = Provider<FirebaseFunctions>((ref) {
-  return FirebaseFunctions.instance;
-});
-
 /// Provider for the PaymentRepository.
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
-  return PaymentRepository(
-    FirebaseFirestore.instance,
-    ref.watch(firebaseFunctionsProvider),
-  );
+  return PaymentRepository(FirebaseFirestore.instance);
 });
 
 /// Repository for managing Payments data in Firestore.
 class PaymentRepository {
-  PaymentRepository(this._firestore, this._functions);
+  PaymentRepository(this._firestore);
 
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
 
   CollectionReference<Payment> get _paymentsRef =>
       _firestore.collection(FirestorePaths.payments).withConverter<Payment>(
             fromFirestore: (snapshot, _) => Payment.fromFirestore(snapshot),
             toFirestore: (payment, _) => payment.toFirestore(),
           );
-
-  /// Mocks a payment client-side for prototype simulation.
-  Future<String> mockPayment({
-    required Student student,
-    required Dues dues,
-  }) async {
-    try {
-      final paymentId = 'pay_${DateTime.now().millisecondsSinceEpoch}';
-      final receiptId = 'CESA-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-      final transactionReference = 'MOCK-${DateTime.now().millisecondsSinceEpoch}';
-
-      // Create pending payment
-      await _paymentsRef.doc(paymentId).set(
-        Payment(
-          id: paymentId,
-          studentId: student.indexNumber,
-          studentName: student.fullName,
-          studentLevel: student.level,
-          duesId: dues.id,
-          duesName: dues.name,
-          academicYear: dues.academicYear,
-          amount: dues.amount,
-          currency: 'GHS',
-          status: PaymentStatus.pending,
-          gatewayProvider: 'paystack',
-          gatewayReference: transactionReference,
-          createdAt: DateTime.now(),
-        ),
-      );
-
-      // Wait 3 seconds to simulate network processing
-      await Future.delayed(const Duration(seconds: 3));
-
-      // Mark as successful and set receipt
-      await _paymentsRef.doc(paymentId).update({
-        'status': PaymentStatus.successful.value,
-        'receiptId': receiptId,
-        'verifiedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Generate receipt document
-      await _firestore.collection('receipts').doc(receiptId).set({
-        'id': receiptId,
-        'paymentId': paymentId,
-        'studentId': student.indexNumber,
-        'duesId': dues.id,
-        'amount': dues.amount,
-        'currency': 'GHS',
-        'gateway': 'paystack',
-        'transactionReference': transactionReference,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // Generate in-app notification for the student
-      final notificationRef = _firestore.collection(FirestorePaths.notifications).doc();
-      final notification = NotificationModel(
-        id: notificationRef.id,
-        title: 'Payment Successful',
-        body: 'Your payment for ${dues.name} has been processed successfully. Receipt: $receiptId',
-        studentId: student.indexNumber,
-        targetAudience: NotificationTarget.personal,
-        academicYear: dues.academicYear,
-        type: NotificationType.paymentConfirmation,
-        createdAt: DateTime.now(),
-      );
-      await notificationRef.set(notification.toFirestore());
-
-      return 'success';
-    } on FirebaseException catch (e) {
-      throw ErrorMapper.fromFirebaseCode(e.code);
-    } catch (e) {
-      throw const AppException('An unexpected error occurred during mock payment.');
-    }
-  }
 
   /// Fetches all payments for a specific student.
   Future<List<Payment>> getStudentPayments(String indexNumber) async {

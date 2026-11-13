@@ -98,7 +98,7 @@ class PaymentsScreen extends ConsumerWidget {
                     border: Border.all(color: AppColors.border),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color.fromRGBO(15, 23, 42, 0.03),
+                        color: Color.fromRGBO(10, 42, 82, 0.03),
                         blurRadius: 6,
                         offset: Offset(0, 2),
                       ),

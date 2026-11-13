@@ -2,405 +2,294 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import axios from "axios";
 import * as crypto from "crypto";
+import { BRAND, newReference } from "./brand";
+import { requireUser, setCors, studentForUid } from "./auth";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
 
-// Fetch the Paystack Secret Key from environment or fallback live key
-const getPaystackSecret = () => {
-  return process.env.PAYSTACK_SECRET_KEY || functions.config().paystack?.secret || "sk_live_REMOVED_FOR_SECURITY";
+/** Paystack secret comes only from the PAYSTACK_SECRET_KEY secret; there is no fallback. */
+const paystackSecret = (): string => {
+  const key = process.env.PAYSTACK_SECRET_KEY;
+  if (!key) throw new Error("PAYSTACK_SECRET_KEY is not configured.");
+  return key;
+};
+
+const paymentSecrets = functions.runWith({ secrets: ["PAYSTACK_SECRET_KEY"] });
+
+/**
+ * Marks a payment successful and issues its receipt exactly once. Safe to call
+ * from both the webhook and the verify endpoint at the same time.
+ */
+const finalizeSuccessfulPayment = async (
+  paymentRef: FirebaseFirestore.DocumentReference,
+  reference: string,
+  via: "webhook" | "verify"
+): Promise<{ receiptId: string; alreadyDone: boolean }> => {
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(paymentRef);
+    const p = snap.data();
+    if (!p) throw new Error("Payment record disappeared.");
+    if (p.status === "successful" && p.receiptId) {
+      return { receiptId: p.receiptId as string, alreadyDone: true };
+    }
+
+    const receiptId = newReference();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    tx.update(paymentRef, {
+      status: "successful",
+      receiptId,
+      verifiedAt: now,
+      confirmedAt: now,
+      updatedAt: now,
+    });
+    tx.set(db.collection("receipts").doc(receiptId), {
+      id: receiptId,
+      paymentId: paymentRef.id,
+      studentId: p.studentId,
+      studentName: p.studentName || p.studentId,
+      studentLevel: p.studentLevel || 100,
+      duesId: p.duesId,
+      duesName: p.duesName || `${BRAND.organization} Dues`,
+      academicYear: p.academicYear,
+      amount: p.amount,
+      currency: BRAND.currency,
+      gateway: "paystack",
+      transactionReference: reference,
+      createdAt: now,
+    });
+    tx.set(db.collection("notifications").doc(), {
+      title: "Payment Successful",
+      body: `Your payment for ${p.duesName || "dues"} was received. Receipt: ${receiptId}`,
+      type: "payment_confirmation",
+      targetAudience: "personal",
+      studentId: p.studentId,
+      academicYear: p.academicYear,
+      isRead: false,
+      sentAt: now,
+      createdAt: now,
+    });
+    tx.set(db.collection("auditLogs").doc(), {
+      actor: p.studentId,
+      actorRole: "student",
+      action: "payment_verified",
+      target: paymentRef.id,
+      targetType: "payment",
+      metadata: { receiptId, reference, amount: p.amount, via },
+      timestamp: now,
+    });
+    return { receiptId, alreadyDone: false };
+  });
 };
 
 /**
- * webhookPaystack
- * 
- * Webhook endpoint for Paystack payment callbacks.
+ * webhookPaystack — Paystack calls this on every charge event. The HMAC is checked
+ * against the raw request body, and the charged amount must match the payment.
  */
-export const webhookPaystack = functions.https.onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  const secret = getPaystackSecret();
-  const hash = crypto.createHmac("sha512", secret).update(JSON.stringify(req.body)).digest("hex");
-
-  if (hash !== req.headers["x-paystack-signature"]) {
+export const webhookPaystack = paymentSecrets.https.onRequest(async (req, res) => {
+  const signature = String(req.headers["x-paystack-signature"] || "");
+  const raw = (req as any).rawBody as Buffer | undefined;
+  const expected = crypto.createHmac("sha512", paystackSecret()).update(raw || JSON.stringify(req.body)).digest("hex");
+  const ok = signature.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  if (!ok) {
     res.status(401).send("Invalid signature");
     return;
   }
 
   const event = req.body;
-
-  if (event.event === "charge.success") {
+  if (event?.event === "charge.success") {
     const data = event.data;
-    const reference = data.reference;
-
-    const paymentQuery = await db.collection("payments").where("gatewayReference", "==", reference).limit(1).get();
-    
-    if (paymentQuery.empty) {
+    const q = await db.collection("payments").where("gatewayReference", "==", data.reference).limit(1).get();
+    if (q.empty) {
       res.status(404).send("Payment not found");
       return;
     }
-
-    const paymentDoc = paymentQuery.docs[0];
-    const paymentData = paymentDoc.data();
-
-    if (paymentData.status === "successful") {
-      res.status(200).send("Already processed");
+    const doc = q.docs[0];
+    const p = doc.data();
+    if (data.amount !== p.amount || data.currency !== BRAND.currency) {
+      console.error(`Amount mismatch for ${data.reference}: paid ${data.amount} ${data.currency}, expected ${p.amount}`);
+      await doc.ref.update({ status: "failed", failureReason: "amount_mismatch", updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+      res.status(200).send("Amount mismatch recorded");
       return;
     }
-
-    const receiptId = `CESA-${new Date().getFullYear()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-    const batch = db.batch();
-
-    batch.update(paymentDoc.ref, {
-      status: "successful",
-      verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      receiptId: receiptId,
-    });
-
-    const receiptRef = db.collection("receipts").doc(receiptId);
-    batch.set(receiptRef, {
-      id: receiptId,
-      paymentId: paymentDoc.id,
-      studentId: paymentData.studentId,
-      studentName: paymentData.studentName || paymentData.studentId,
-      studentLevel: paymentData.studentLevel || 100,
-      duesId: paymentData.duesId,
-      duesName: paymentData.duesName || "CESA Dues",
-      academicYear: paymentData.academicYear || "2025/2026",
-      amount: paymentData.amount,
-      currency: "GHS",
-      gateway: "paystack",
-      transactionReference: reference,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await batch.commit();
+    await finalizeSuccessfulPayment(doc.ref, data.reference, "webhook");
   }
-
   res.status(200).send("Webhook processed");
 });
 
 /**
- * initializePaystackPaymentHttp
- * 
- * Direct HTTP POST endpoint with CORS to initialize a real Paystack transaction.
+ * initializePaystackPaymentHttp — starts a Paystack checkout for the signed-in,
+ * ID-verified student. The student, amount and dues come from Firestore, never from
+ * the request body.
  */
-export const initializePaystackPaymentHttp = functions.https.onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
+export const initializePaystackPaymentHttp = paymentSecrets.https.onRequest(async (req, res) => {
+  setCors(res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
   }
+  const fail = (reason: string): void => {
+    res.status(200).json({ data: { success: false, reason } });
+  };
 
   try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
     const body = req.body?.data || req.body || {};
-    const indexNumber = (body.indexNumber || "").toUpperCase().trim();
-    const duesId = body.duesId;
-    const email = body.email || `${indexNumber.toLowerCase()}@st.uenr.edu.gh`;
+    const duesId = String(body.duesId || "");
+    if (!duesId) return fail("Dues ID is required.");
 
-    if (!indexNumber || !duesId) {
-      res.status(200).json({
-        data: {
-          success: false,
-          reason: "Both Student Index Number and Dues ID are required.",
-        }
-      });
-      return;
+    const student = await studentForUid(user.uid);
+    if (!student) return fail("No student profile is linked to this account.");
+    if (student.data.verificationStatus !== "verified") {
+      return fail("Please verify your student ID before paying dues.");
     }
 
-    // 1. Fetch Dues details
-    let duesDoc = await db.collection("dues").doc(duesId).get();
-    let duesData = duesDoc.data();
-    let amountInPesewas = duesData?.amount || 15000; // default 150.00 GHS in pesewas
-    let duesTitle = duesData?.name || "CESA Annual Dues";
-
-    // If dues doesn't exist yet in firestore, create standard dues
-    if (!duesDoc.exists) {
-      await db.collection("dues").doc(duesId).set({
-        id: duesId,
-        name: duesTitle,
-        amount: amountInPesewas,
-        academicYear: "2025/2026",
-        applicableLevels: [100, 200, 300, 400],
-        status: "active",
-        description: "Official Civil Engineering Students Association annual membership and development dues.",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+    const duesDoc = await db.collection("dues").doc(duesId).get();
+    const dues = duesDoc.data();
+    if (!dues || dues.status !== "active") return fail("These dues are not open for payment.");
+    const levels: number[] = dues.applicableLevels || [];
+    if (levels.length > 0 && !levels.includes(student.data.level)) {
+      return fail("These dues do not apply to your level.");
     }
 
-    // 2. Generate Reference
-    const transactionReference = `CESA-${new Date().getFullYear()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    const already = await db.collection("payments")
+      .where("studentId", "==", student.id)
+      .where("duesId", "==", duesId)
+      .where("status", "==", "successful").limit(1).get();
+    if (!already.empty) return fail("You have already paid these dues.");
 
-    // 3. Initialize Paystack Transaction via Paystack REST API
-    let authorizationUrl = "";
-    let accessCode = "";
+    const email = student.data.email || user.email || `${student.id.toLowerCase()}@${BRAND.studentEmailDomain}`;
+    const reference = newReference();
+
+    let authorizationUrl: string;
+    let accessCode: string;
     try {
-      const paystackRes = await axios.post(
+      const r = await axios.post(
         "https://api.paystack.co/transaction/initialize",
         {
-          email: email,
-          amount: amountInPesewas,
-          currency: "GHS",
-          reference: transactionReference,
+          email,
+          amount: dues.amount,
+          currency: BRAND.currency,
+          reference,
           callback_url: "https://cesa-dues-9a267.web.app/payment-success",
           metadata: {
             custom_fields: [
-              {
-                display_name: "Student Index",
-                variable_name: "student_index",
-                value: indexNumber
-              },
-              {
-                display_name: "Dues Title",
-                variable_name: "dues_title",
-                value: duesTitle
-              }
-            ]
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${getPaystackSecret()}`,
-            "Content-Type": "application/json",
+              { display_name: "Student Index", variable_name: "student_index", value: student.id },
+              { display_name: "Dues Title", variable_name: "dues_title", value: dues.name },
+            ],
           },
-          timeout: 10000,
-        }
+        },
+        { headers: { Authorization: `Bearer ${paystackSecret()}` }, timeout: 15000 }
       );
-
-      authorizationUrl = paystackRes.data.data.authorization_url;
-      accessCode = paystackRes.data.data.access_code;
-    } catch (paystackError: any) {
-      console.warn("Paystack API call notice:", paystackError.response?.data || paystackError.message);
-      // Fallback checkout simulation URL
-      authorizationUrl = `https://checkout.paystack.com/${transactionReference}`;
+      authorizationUrl = r.data.data.authorization_url;
+      accessCode = r.data.data.access_code;
+    } catch (e: any) {
+      console.error("Paystack initialize failed:", e.response?.data || e.message);
+      return fail("Could not start the payment. Please try again shortly.");
     }
 
-    // 3.5 Look up student in roster to ensure accurate full name and level
-    let studentFullName = body.studentName || indexNumber;
-    let studentLevel = body.studentLevel || duesData?.applicableLevels?.[0] || 100;
-
-    try {
-      const studentDoc = await db.collection("students").doc(indexNumber).get();
-      if (studentDoc.exists) {
-        const sData = studentDoc.data();
-        if (sData?.fullName && (!body.studentName || body.studentName === 'Student' || body.studentName === indexNumber)) {
-          studentFullName = sData.fullName;
-        } else if (body.studentName && body.studentName !== 'Student') {
-          studentFullName = body.studentName;
-        }
-        if (sData?.level) {
-          studentLevel = sData.level;
-        } else if (body.studentLevel) {
-          studentLevel = body.studentLevel;
-        }
-      }
-    } catch (e) {
-      console.warn("Student lookup notice:", e);
-    }
-
-    // 4. Create Pending Payment Document in Firestore
-    const paymentId = `pay_${Date.now()}`;
+    const paymentId = `pay_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
+    const now = admin.firestore.FieldValue.serverTimestamp();
     await db.collection("payments").doc(paymentId).set({
       id: paymentId,
-      studentId: indexNumber,
-      studentName: studentFullName,
-      studentLevel: studentLevel,
-      duesId: duesId,
-      duesName: duesTitle,
-      academicYear: duesData?.academicYear || "2025/2026",
-      amount: amountInPesewas,
-      currency: "GHS",
+      studentId: student.id,
+      studentName: student.data.fullName || student.id,
+      studentLevel: student.data.level || 100,
+      duesId,
+      duesName: dues.name,
+      academicYear: dues.academicYear,
+      amount: dues.amount,
+      currency: BRAND.currency,
       status: "pending",
       gatewayProvider: "paystack",
-      gatewayReference: transactionReference,
-      accessCode: accessCode,
-      authorizationUrl: authorizationUrl,
-      initiatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      gatewayReference: reference,
+      accessCode,
+      authorizationUrl,
+      initiatedAt: now,
+      createdAt: now,
+      updatedAt: now,
     });
 
     res.status(200).json({
       data: {
         success: true,
-        paymentId: paymentId,
-        reference: transactionReference,
-        authorizationUrl: authorizationUrl,
-        amount: amountInPesewas,
-        currency: "GHS",
-        duesTitle: duesTitle,
-      }
+        paymentId,
+        reference,
+        authorizationUrl,
+        amount: dues.amount,
+        currency: BRAND.currency,
+        duesTitle: dues.name,
+      },
     });
   } catch (err: any) {
-    console.error("Initialize Payment Error:", err);
-    res.status(200).json({
-      data: {
-        success: false,
-        reason: err.message || "Failed to initialize Paystack checkout.",
-      }
-    });
+    console.error("initializePaystackPaymentHttp error:", err);
+    fail("Failed to initialise checkout.");
   }
 });
 
 /**
- * verifyPaystackPaymentHttp
- * 
- * Direct HTTP POST endpoint to verify transaction status directly with Paystack
- * or complete immediate clearance.
+ * verifyPaystackPaymentHttp — asks Paystack whether the caller's own payment
+ * succeeded and, if so, issues the receipt.
  */
-export const verifyPaystackPaymentHttp = functions.https.onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
+export const verifyPaystackPaymentHttp = paymentSecrets.https.onRequest(async (req, res) => {
+  setCors(res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
   }
+  const fail = (reason: string): void => {
+    res.status(200).json({ data: { success: false, verified: false, reason } });
+  };
 
   try {
-    const body = req.body?.data || req.body || {};
-    const reference = body.reference;
+    const user = await requireUser(req, res);
+    if (!user) return;
 
-    if (!reference) {
-      res.status(200).json({
-        data: {
-          success: false,
-          verified: false,
-          reason: "Payment transaction reference is required.",
-        }
-      });
+    const reference = String((req.body?.data || req.body || {}).reference || "");
+    if (!reference) return fail("Payment reference is required.");
+
+    const student = await studentForUid(user.uid);
+    const q = await db.collection("payments").where("gatewayReference", "==", reference).limit(1).get();
+    if (!student || q.empty || q.docs[0].data().studentId !== student.id) {
+      return fail("Payment record not found.");
+    }
+    const doc = q.docs[0];
+    const p = doc.data();
+
+    if (p.status === "successful") {
+      res.status(200).json({ data: { success: true, verified: true, receiptId: p.receiptId, message: "Payment already verified." } });
       return;
     }
 
-    // 1. Fetch Payment from Firestore
-    const paymentQuery = await db.collection("payments").where("gatewayReference", "==", reference).limit(1).get();
-    if (paymentQuery.empty) {
-      res.status(200).json({
-        data: {
-          success: false,
-          verified: false,
-          reason: "Payment record not found.",
-        }
-      });
-      return;
-    }
-
-    const paymentDoc = paymentQuery.docs[0];
-    const paymentData = paymentDoc.data();
-
-    if (paymentData.status === "successful") {
-      res.status(200).json({
-        data: {
-          success: true,
-          verified: true,
-          receiptId: paymentData.receiptId,
-          message: "Payment already verified and cleared.",
-        }
-      });
-      return;
-    }
-
-    // 2. Query Paystack Verify API
-    let isSuccess = false;
+    let paid = false;
     try {
-      const verifyRes = await axios.get(
-        `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${getPaystackSecret()}`,
-          },
-          timeout: 10000,
-        }
-      );
-      if (verifyRes.data?.data?.status === "success") {
-        isSuccess = true;
-      }
-    } catch (verifyErr: any) {
-      console.error("Paystack verification API error:", verifyErr.response?.data || verifyErr.message);
+      const v = await axios.get(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+        headers: { Authorization: `Bearer ${paystackSecret()}` },
+        timeout: 15000,
+      });
+      const d = v.data?.data;
+      paid = d?.status === "success" && d?.amount === p.amount && d?.currency === BRAND.currency;
+    } catch (e: any) {
+      console.error("Paystack verify failed:", e.response?.data || e.message);
     }
 
-    if (!isSuccess) {
-      res.status(200).json({
-        data: {
-          success: true,
-          verified: false,
-          message: "Payment authorization is still pending or incomplete. Please complete transaction on Paystack.",
-        }
-      });
+    if (!paid) {
+      res.status(200).json({ data: { success: true, verified: false, message: "Payment is still pending or incomplete." } });
       return;
     }
 
-    // 3. Mark as Successful and Create Receipt
-    const receiptId = `CESA-${new Date().getFullYear()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-    const batch = db.batch();
-
-    batch.update(paymentDoc.ref, {
-      status: "successful",
-      verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-      confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      receiptId: receiptId,
-    });
-
-    const receiptRef = db.collection("receipts").doc(receiptId);
-    batch.set(receiptRef, {
-      id: receiptId,
-      paymentId: paymentDoc.id,
-      studentId: paymentData.studentId,
-      studentName: paymentData.studentName || paymentData.studentId,
-      studentLevel: paymentData.studentLevel || 100,
-      duesId: paymentData.duesId,
-      duesName: paymentData.duesName || "CESA Dues",
-      academicYear: paymentData.academicYear || "2025/2026",
-      amount: paymentData.amount,
-      currency: "GHS",
-      gateway: "paystack",
-      transactionReference: reference,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // 4. Log Audit
-    const auditRef = db.collection("audit_logs").doc();
-    batch.set(auditRef, {
-      action: "PAYSTACK_PAYMENT_VERIFIED",
-      target: paymentData.studentId,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      details: {
-        amount: paymentData.amount,
-        receiptId: receiptId,
-        reference: reference,
-      }
-    });
-
-    await batch.commit();
-
+    const { receiptId } = await finalizeSuccessfulPayment(doc.ref, reference, "verify");
     res.status(200).json({
-      data: {
-        success: true,
-        verified: true,
-        receiptId: receiptId,
-        message: "Payment successfully verified and official CESA receipt generated!",
-      }
+      data: { success: true, verified: true, receiptId, message: `Payment verified and your official ${BRAND.organization} receipt was issued.` },
     });
   } catch (err: any) {
-    console.error("Verify Payment Error:", err);
-    res.status(200).json({
-      data: {
-        success: false,
-        verified: false,
-        reason: err.message || "Failed to verify transaction.",
-      }
-    });
+    console.error("verifyPaystackPaymentHttp error:", err);
+    fail("Failed to verify the transaction.");
   }
-});
-
-// Backward compatibility callable
-export const initializePayment = functions.https.onCall(async (data, context) => {
-  return { success: true };
 });

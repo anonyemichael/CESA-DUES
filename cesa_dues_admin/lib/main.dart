@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cesa_dues_core/cesa_dues_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,14 +29,14 @@ void main() async {
   );
 }
 
-/// CESA DUES Admin Portal Application.
+/// ACES DUES Admin Portal Application.
 class CesaDuesAdminApp extends StatelessWidget {
   const CesaDuesAdminApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'CESA DUES Admin',
+      title: '${AppConstants.appName} Admin',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,

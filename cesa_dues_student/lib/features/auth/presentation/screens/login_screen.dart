@@ -66,8 +66,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF0F172A),
-                    Color(0xFF1E293B),
+                    Color(0xFF0A2A52),
+                    Color(0xFF163D73),
                     Color(0xFFF8FAFC),
                   ],
                   stops: [0.0, 0.6, 1.0],
@@ -117,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             child: ClipOval(
                               child: Image.asset(
-                                'assets/images/logo.jpg',
+                                'assets/images/logo.png',
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) => const Icon(
                                   Icons.school,
@@ -133,18 +133,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       // Brand Header
                       const Text(
-                        'CESA DUES',
+                        AppConstants.appName,
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A2A52),
                           letterSpacing: 0.8,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Civil Engineering Students\' Association',
+                        AppConstants.associationFullName,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -163,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                              color: const Color(0xFF0A2A52).withValues(alpha: 0.04),
                               offset: const Offset(0, 6),
                               blurRadius: 18,
                             ),
@@ -176,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               iconBg: const Color(0xFFECFDF5),
                               iconColor: const Color(0xFF059669),
                               title: 'Official Digital Receipts',
-                              subtitle: 'Instant tamper-proof receipts for departmental dues',
+                              subtitle: 'Instant tamper-proof receipts for association dues',
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 10),
@@ -198,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               iconBg: const Color(0xFFF5F3FF),
                               iconColor: const Color(0xFF7C3AED),
                               title: 'Instant QR Verification',
-                              subtitle: 'Quick, seamless clearance check for departmental activities',
+                              subtitle: 'Quick, seamless clearance check for association activities',
                             ),
                           ],
                         ),
@@ -212,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0F172A).withValues(alpha: 0.1),
+                              color: const Color(0xFF0A2A52).withValues(alpha: 0.1),
                               offset: const Offset(0, 4),
                               blurRadius: 14,
                             ),
@@ -240,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         width: 22,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E293B)),
+                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF163D73)),
                                         ),
                                       ),
                                     )
@@ -256,7 +256,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0F172A),
+                                              color: Color(0xFF0A2A52),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -273,7 +273,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       // Institutional Footer
                       const Text(
-                        'Department of Civil & Environmental Engineering\nUniversity of Energy and Natural Resources (UENR)',
+                        AppConstants.institutionFooter,
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF94A3B8),
@@ -323,7 +323,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF0A2A52),
                 ),
               ),
               const SizedBox(height: 2),

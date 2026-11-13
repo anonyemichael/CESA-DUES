@@ -78,7 +78,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A2A52),
               ),
             ),
             const SizedBox(height: 8),
@@ -112,7 +112,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                           SizedBox(height: 8),
                           Text(
                             'Take Photo',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0A2A52)),
                           ),
                         ],
                       ),
@@ -140,7 +140,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                           SizedBox(height: 8),
                           Text(
                             'Photo Gallery',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0A2A52)),
                           ),
                         ],
                       ),
@@ -203,7 +203,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0A2A52), size: 20),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -215,7 +215,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
         title: const Text(
           'Student Verification',
           style: TextStyle(
-            color: Color(0xFF0F172A),
+            color: Color(0xFF0A2A52),
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -264,7 +264,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF0A2A52),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -313,7 +313,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: Color(0xFF0A2A52),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -448,7 +448,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: Color(0xFF0A2A52),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -540,7 +540,7 @@ class _IdUploadScreenState extends ConsumerState<IdUploadScreen> {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'Encrypted & verified with CESA Department Registry',
+                      'Encrypted & verified with the ${AppConstants.organizationName} student registry',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade500,

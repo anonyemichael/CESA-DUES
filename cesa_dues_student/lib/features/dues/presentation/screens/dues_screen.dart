@@ -4,6 +4,7 @@ import 'package:cesa_dues_core/cesa_dues_core.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/router/app_router.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 import '../controllers/dues_controller.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../../receipts/presentation/controllers/receipts_controller.dart';
@@ -67,12 +68,11 @@ class DuesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final studentAsync = ref.watch(currentStudentProvider);
+    ref.watch(currentStudentProvider); // rebuild when the student record changes
     final duesAsync = ref.watch(studentDuesProvider);
     final receiptsAsync = ref.watch(studentReceiptsProvider);
     final paymentState = ref.watch(paymentControllerProvider);
 
-    final student = studentAsync.asData?.value;
     final receipts = receiptsAsync.asData?.value ?? [];
     final paidDuesIds = receipts.where((p) => p.isSuccessful).map((r) => r.duesId).toSet();
 
@@ -125,19 +125,20 @@ class DuesScreen extends ConsumerWidget {
         },
         child: duesAsync.when(
           data: (duesList) {
-            final allDues = duesList.isNotEmpty
-                ? duesList
-                : [
-                    Dues(
-                      id: 'cesa-annual-dues-2025',
-                      name: 'CESA Annual Departmental Dues',
-                      amount: 15000,
-                      academicYear: '2025/2026',
-                      applicableLevels: [student?.level ?? 100],
-                      status: DuesStatus.active,
-                      description: 'Mandatory annual dues for Civil Engineering students covering departmental development, student welfare, and activities.',
-                    ),
-                  ];
+            final allDues = duesList;
+            if (allDues.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 80),
+                  EmptyStateWidget(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'No dues published yet',
+                    subtitle: 'The Financial Secretary has not opened any dues for your level. Pull down to refresh.',
+                  ),
+                ],
+              );
+            }
 
             return ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -157,7 +158,7 @@ class DuesScreen extends ConsumerWidget {
                     ),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color.fromRGBO(15, 23, 42, 0.04),
+                        color: Color.fromRGBO(10, 42, 82, 0.04),
                         blurRadius: 10,
                         offset: Offset(0, 3),
                       ),
@@ -315,7 +316,7 @@ class DuesScreen extends ConsumerWidget {
                                     children: [
                                       Icon(Icons.check, size: 13, color: Color(0xFF2563EB)),
                                       SizedBox(width: 6),
-                                      Text('CESA Student Welfare & Association Levies', style: TextStyle(fontSize: 11, color: Color(0xFF1E3A8A))),
+                                      Text('${AppConstants.organizationName} Student Welfare & Association Levies', style: TextStyle(fontSize: 11, color: Color(0xFF1E3A8A))),
                                     ],
                                   ),
                                   SizedBox(height: 4),

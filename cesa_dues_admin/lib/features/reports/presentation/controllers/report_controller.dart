@@ -45,9 +45,9 @@ class ReportController extends StateNotifier<AsyncValue<void>> {
       final xFile = XFile.fromData(
         Uint8List.fromList(bytes),
         mimeType: 'text/csv',
-        name: 'CESA_Dues_Report_${dues.id}.csv',
+        name: '${AppConstants.organizationName}_Dues_Report_${dues.id}.csv',
       );
-      await Share.shareXFiles([xFile], subject: 'CESA Dues Report - ${dues.name}');
+      await Share.shareXFiles([xFile], subject: '${AppConstants.organizationName} Dues Report - ${dues.name}');
 
       state = const AsyncData(null);
       return true;

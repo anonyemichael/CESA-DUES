@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// CESA DUES Design System — Material 3 Theme.
+/// ACES DUES Design System — Material 3 Theme.
 ///
 /// Professional, modern, trustworthy. Lightweight — no heavy shadows,
 /// no excessive gradients, no blur effects.

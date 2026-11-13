@@ -14,7 +14,7 @@ class QrReceiptScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final receiptNumber = (payment.receiptId != null && payment.receiptId!.isNotEmpty)
         ? payment.receiptId!
-        : 'CESA-REC-${payment.id.length >= 8 ? payment.id.substring(0, 8).toUpperCase() : payment.id.toUpperCase()}';
+        : '${AppConstants.receiptPrefix}-REC-${payment.id.length >= 8 ? payment.id.substring(0, 8).toUpperCase() : payment.id.toUpperCase()}';
 
     // Generate QR Payload. We embed basic verifiable data.
     final payload = jsonEncode({

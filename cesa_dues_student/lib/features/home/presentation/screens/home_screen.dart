@@ -100,7 +100,7 @@ class HomeScreen extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
-                                'CIVIL ENGINEERING',
+                                AppConstants.departmentNameUpper,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -428,7 +428,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildHeroDuesCard(BuildContext context, Dues? dues, bool isVerified, bool isPaid) {
     final amountFormatted = dues != null ? 'GHS ${dues.amountInCedis.toStringAsFixed(2)}' : 'GHS 150.00';
-    final duesName = dues != null ? dues.name : '2025/2026 Annual Departmental Dues';
+    final duesName = dues != null ? dues.name : '2025/2026 Annual Association Dues';
     final academicYear = dues != null ? dues.academicYear : '2025/2026';
 
     return Container(
@@ -441,7 +441,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.03),
+            color: Color.fromRGBO(10, 42, 82, 0.03),
             offset: Offset(0, 2),
             blurRadius: 6,
           ),
@@ -553,7 +553,7 @@ class HomeScreen extends ConsumerWidget {
                   Icon(isPaid ? Icons.receipt_long : Icons.credit_card, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    isPaid ? 'View Official Receipt' : 'Pay Departmental Dues',
+                    isPaid ? 'View Official Receipt' : 'Pay Association Dues',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   const SizedBox(width: 6),

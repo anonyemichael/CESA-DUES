@@ -28,7 +28,7 @@ class OnboardingController extends StateNotifier<AsyncValue<void>> {
       
       // Upload image if provided
       if (idImageBytes != null) {
-        final ref = _storage.ref().child('student_ids').child(user.uid);
+        final ref = _storage.ref().child('idCards').child(user.uid).child('id_photo.jpg');
         await ref.putData(idImageBytes, SettableMetadata(contentType: 'image/jpeg'));
         imageUrl = await ref.getDownloadURL();
       }
@@ -40,7 +40,7 @@ class OnboardingController extends StateNotifier<AsyncValue<void>> {
         email: user.email ?? '',
         fullName: fullName,
         level: level,
-        programme: 'BSc. Civil Engineering',
+        programme: AppConstants.programmeName,
       );
 
       if (imageUrl != null) {

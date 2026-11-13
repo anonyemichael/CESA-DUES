@@ -1,16 +1,15 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:cesa_dues_core/cesa_dues_core.dart';
+import '../../../../core/services/auth_headers.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../../receipts/presentation/controllers/receipts_controller.dart';
 import '../../../dues/presentation/controllers/dues_controller.dart';
 
 class PaymentController extends StateNotifier<AsyncValue<void>> {
-  PaymentController(this._paymentRepository, this._ref) : super(const AsyncData(null));
+  PaymentController(this._ref) : super(const AsyncData(null));
 
-  final PaymentRepository _paymentRepository;
   final Ref _ref;
 
   static const String _initEndpoint =
@@ -19,33 +18,15 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
       'https://us-central1-cesa-dues-9a267.cloudfunctions.net/verifyPaystackPaymentHttp';
 
   /// Initializes a real Paystack transaction via Cloud Function HTTP endpoint.
+  /// The student, amount and dues are resolved server-side from the sign-in token.
   Future<Map<String, dynamic>?> initiatePaystackPayment(Dues dues) async {
     state = const AsyncLoading();
     try {
-      final authUser = _ref.read(authStateProvider).value;
-      Student? student;
-      try {
-        student = await _ref.read(currentStudentProvider.future);
-      } catch (_) {}
-
-      final email = (student?.email != null && student!.email!.isNotEmpty)
-          ? student.email!
-          : (authUser?.email ?? 'student@st.uenr.edu.gh');
-      
-      final indexNumber = student?.indexNumber ??
-          (email.contains('@') ? email.split('@').first.toUpperCase() : 'CESA-STUDENT');
-
       final response = await http.post(
         Uri.parse(_initEndpoint),
-        headers: {'Content-Type': 'application/json'},
+        headers: await authedJsonHeaders(),
         body: jsonEncode({
-          'data': {
-            'indexNumber': indexNumber,
-            'studentName': student?.fullName ?? authUser?.displayName ?? indexNumber,
-            'studentLevel': student?.level ?? 100,
-            'duesId': dues.id,
-            'email': email,
-          }
+          'data': {'duesId': dues.id},
         }),
       );
 
@@ -82,7 +63,7 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
     try {
       final response = await http.post(
         Uri.parse(_verifyEndpoint),
-        headers: {'Content-Type': 'application/json'},
+        headers: await authedJsonHeaders(),
         body: jsonEncode({
           'data': {
             'reference': reference,
@@ -112,29 +93,9 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
-
-  /// Quick mock fallback for instant offline testing.
-  Future<void> mockInstantPayment(Dues dues) async {
-    state = const AsyncLoading();
-    try {
-      final student = await _ref.read(currentStudentProvider.future);
-      if (student == null) throw const AppException('Must be logged in.');
-
-      await _paymentRepository.mockPayment(student: student, dues: dues);
-      _ref.invalidate(studentReceiptsProvider);
-      _ref.invalidate(studentDuesProvider);
-      _ref.invalidate(currentStudentProvider);
-      state = const AsyncData(null);
-    } catch (e, st) {
-      state = AsyncError(e is AppException ? e : AppException(e.toString()), st);
-    }
-  }
 }
 
 final paymentControllerProvider =
     StateNotifierProvider<PaymentController, AsyncValue<void>>((ref) {
-  return PaymentController(
-    ref.watch(paymentRepositoryProvider),
-    ref,
-  );
+  return PaymentController(ref);
 });

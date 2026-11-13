@@ -92,7 +92,7 @@ class StudentImportController extends StateNotifier<AsyncValue<int>> {
                 studentsToImport.add(Student(
                   indexNumber: indexNumber,
                   fullName: fullName,
-                  programme: 'Civil Engineering',
+                  programme: AppConstants.programmeName,
                   level: level,
                   academicYear: academicYear.isNotEmpty ? academicYear : '2023/2024',
                 ));
@@ -144,7 +144,7 @@ class StudentImportController extends StateNotifier<AsyncValue<int>> {
               studentsToImport.add(Student(
                 indexNumber: indexNumber,
                 fullName: fullName,
-                programme: 'Civil Engineering',
+                programme: AppConstants.programmeName,
                 level: level,
                 academicYear: academicYear.isNotEmpty ? academicYear : '2023/2024',
               ));

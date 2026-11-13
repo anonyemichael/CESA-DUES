@@ -26,7 +26,7 @@ class Receipt extends Equatable {
   });
 
   final String id;
-  final String receiptNumber; // e.g. CESA-2026-000123
+  final String receiptNumber; // e.g. ACES-2026-000123
   final String studentId;
   final String studentName;
   final int studentLevel;

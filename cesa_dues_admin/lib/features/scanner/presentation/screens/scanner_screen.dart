@@ -41,7 +41,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         final payload = jsonDecode(code) as Map<String, dynamic>;
         
         if (!payload.containsKey('receiptId') || !payload.containsKey('studentId')) {
-          _showError('Invalid QR Code format. Please scan an official CESA clearance pass.');
+          _showError('Invalid QR Code format. Please scan an official ${AppConstants.organizationName} clearance pass.');
           return;
         }
 
@@ -64,7 +64,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           }
         }
       } catch (e) {
-        _showError('Unrecognized QR Code. Please scan an official CESA student pass.');
+        _showError('Unrecognized QR Code. Please scan an official ${AppConstants.organizationName} student pass.');
       }
     }
   }

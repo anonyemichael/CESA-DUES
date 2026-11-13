@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// CESA DUES Official Institutional & Fintech Palette.
+/// ACES DUES palette — derived from the ACES (UENR) crest: navy blue on white.
 class AppColors {
   AppColors._();
 
   // Brand Primaries
-  static const Color primary = Color(0xFF0F172A);      // Deep Slate Navy
-  static const Color primaryLight = Color(0xFF1E293B); // Slate 800
-  static const Color primaryDark = Color(0xFF020617);  // Slate 950
+  static const Color primary = Color(0xFF0A2A52);      // ACES Navy (crest)
+  static const Color primaryLight = Color(0xFF163D73); // Navy, lighter
+  static const Color primaryDark = Color(0xFF061B36);  // Navy, deepest
   
   // Brand Accent (Institutional Academic Blue & Gold)
   static const Color accent = Color(0xFF1E40AF);       // Cobalt Blue
@@ -24,7 +24,7 @@ class AppColors {
   static const Color chipBackground = Color(0xFFF1F5F9);
 
   // Typography
-  static const Color textPrimary = Color(0xFF0F172A);   // Slate 900
+  static const Color textPrimary = Color(0xFF0B1F3A);   // Near-black navy
   static const Color textSecondary = Color(0xFF475569); // Slate 600
   static const Color textHint = Color(0xFF94A3B8);      // Slate 400
   static const Color textMuted = Color(0xFF94A3B8);

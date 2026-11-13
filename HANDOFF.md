@@ -1,61 +1,98 @@
-# CESA DUES - System Handoff & Deployment Guide
+# ACES DUES: Handoff and Deployment Guide
 
-Congratulations! The CESA DUES monorepo has been fully developed, tested, and polished. This document serves as the final technical handoff for deploying the system to production.
+ACES DUES is the dues system of the Association of Computer Engineering Students, UENR. This file
+is the checklist for taking it to production and records what was verified.
 
-## System Architecture Review
-- **`cesa_dues_core`**: The shared engine. Contains all Riverpod repositories, Firestore data models, serializers, and core UI theme components.
-- **`cesa_dues_student`**: The student-facing Flutter application.
-- **`cesa_dues_admin`**: The departmental staff (HOD & Financial Secretary) application.
-- **`functions/`**: The Firebase Cloud Functions backend written in TypeScript.
-- **`firebase/`**: The infrastructure-as-code definitions (`firestore.rules`, `firestore.indexes.json`).
+## Architecture
 
-## Deployment Checklist
+* `cesa_dues_core`: shared models, repositories and constants.
+* `cesa_dues_student`: students' app. `cesa_dues_admin`: Financial Secretary and HOD app.
+* `functions/`: Cloud Functions for admin login, Paystack, ID verification and push notifications.
+* `firestore.rules`, `storage.rules`: security rules. Tests are in `functions/test`.
 
-### 1. Firebase Backend Deployment
-1. **Initialize Firebase Project**:
-   Ensure you have created a Firebase project in the console and upgraded it to the **Blaze (Pay-as-you-go)** plan (required for Cloud Functions and Node.js 20).
-2. **Deploy Security Rules and Indexes**:
-   ```bash
-   firebase deploy --only firestore
+## Deployment checklist
+
+### 1. Configure the backend
+1. Copy `functions/.env.example` to `functions/.env` and set the real e-mails:
    ```
-3. **Configure Environment Variables**:
-   Set your Paystack Secret Key in Cloud Functions:
-   ```bash
-   firebase functions:config:set paystack.secret="sk_live_YOUR_KEY"
+   ADMIN_HOD_EMAILS=hod@...
+   ADMIN_FINSEC_EMAILS=finsec@...
    ```
-4. **Deploy Cloud Functions**:
+   An e-mail on neither list cannot sign in to the admin app.
+2. Set secrets (Blaze plan required):
    ```bash
-   cd functions
-   npm install
-   npm run build
-   firebase deploy --only functions
+   firebase functions:secrets:set PAYSTACK_SECRET_KEY
+   firebase functions:secrets:set CLEANUP_TOKEN   # optional; omit to keep cleanDatabase disabled
    ```
+3. Install the **Trigger Email from Firestore** extension and point it at the `mail` collection.
+   Admin one-time codes are delivered through it.
+4. Enable Authentication providers: **Google** (students). Admins use custom tokens issued by the
+   `verifyAdminLogin` function, so no password or e-mail-link provider is needed.
+5. Enable the Cloud Vision API if you want automatic ID reading. Without it, every ID goes to
+   manual approval.
 
-### 2. Mobile Apps Deployment
-Both apps (`cesa_dues_student` and `cesa_dues_admin`) are built for Android, targeting low-end devices and slow networks (persistence enabled).
+### 2. Deploy
+```bash
+cd functions && npm install && npm run build && cd ..
+firebase deploy --only firestore,storage,functions
+```
+The rules now reject anonymous and cross-student access. Ship the new app builds together with, or
+before, the rules; older builds read notifications and upload ID photos in ways the new rules
+refuse.
 
-1. **Android Signing**:
-   Configure your `key.properties` file in the `android/` directory of both apps for release signing.
-2. **Student App Build**:
-   ```bash
-   cd cesa_dues_student
-   flutter build apk --release --split-per-abi
-   # OR for Google Play:
-   flutter build appbundle --release
-   ```
-3. **Admin App Build**:
-   ```bash
-   cd cesa_dues_admin
-   flutter build apk --release --split-per-abi
-   ```
+### 3. Paystack
+Set the webhook URL in the Paystack dashboard to the deployed `webhookPaystack` function.
 
-## Production Security Notes
-- **Zero-Trust Payments**: The `firestore.rules` is configured strictly so that `payments` cannot be written to by clients. Always rely on the Cloud Functions webhook to verify Paystack events.
-- **Admin Authentication**: Admins log in via passwordless Email Link (OTP). Ensure your Firebase project's Authentication settings have "Email link (passwordless sign-in)" enabled.
+### 4. Seed and configure dues
+`cd functions && node seed.js` creates two **placeholder** dues. Set the real amounts in the admin
+app (Dues) and archive the placeholders.
 
-## Code Maintenance
-- To make changes to database structures, modify the models in `cesa_dues_core/lib/src/models`. Both apps will automatically inherit the changes when you run `flutter pub get`.
-- Cloud functions are located in `functions/src/`. You can expand the webhook logic in `index.ts` to support more advanced gateway features (like Hubtel) in the future.
+### 5. Build the apps
+```bash
+cd cesa_dues_student && flutter build apk --release --split-per-abi
+cd ../cesa_dues_admin && flutter build apk --release --split-per-abi
+```
+Create `android/key.properties` for release signing in each app (not committed). For web:
+`flutter build web --release`, then `firebase deploy --only hosting`.
 
----
-*Built with Riverpod, Firebase, GoRouter, and a focus on resilience.*
+### 6. Publish
+Publish the new APKs as a GitHub release; the existing release holds the old Civil-branded builds.
+
+## Roles
+
+| Role | Can do |
+|---|---|
+| Student | Own profile, ID upload, pay dues, view own receipts and messages |
+| Financial Secretary | Manage roster, approve IDs, create dues, send announcements, reports |
+| Head of Department | Read-only view of students, dues and reports |
+
+## Maintenance
+* Change a name or wording: `cesa_dues_core/lib/src/constants/app_constants.dart` and
+  `functions/src/brand.ts`.
+* Change colours: `app/theme/app_colors.dart` in each app.
+* Change data structures: models in `cesa_dues_core/lib/src/models`, then update the rules and
+  `functions/test/firestore.rules.test.ts`.
+
+## Verification log (2026-11-12)
+
+Run in a cloud build container with Flutter 3.50.0 and Node 22.
+
+| Check | Result |
+|---|---|
+| `flutter analyze` (whole workspace) | No errors. 117 info and warning findings remain, all in code that predates this change (it was 124 before). |
+| Dart widget and unit tests: student, admin, core | All pass |
+| `tsc` type-check of `functions/` | Clean |
+| Security rules tests against the Firestore and Storage emulators | 22 of 22 pass |
+| `flutter build web --release`, student and admin | Both build successfully |
+| Student login screen rendered with real fonts in a Flutter test | Crest, navy gradient, text and footer display correctly |
+
+**Not verified:**
+* Nothing was run against live Firebase, Paystack, Cloud Vision or the e-mail extension. The
+  payment, ID-verification and admin-login functions compile and their rules are tested, but their
+  runtime behaviour has not been exercised end to end.
+* Android APKs were not built (no Android SDK in the build container).
+* Only the student login screen was viewed visually. The other screens and the admin app were
+  recoloured and rebuilt but not looked at, because the web apps cannot start in the build
+  container (the Firebase web SDK loads from a blocked CDN) and no device was available.
+* UENR, ELEESA and GESA web pages could not be opened from the build container, so department and
+  association facts come from search summaries and should be confirmed.

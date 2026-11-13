@@ -49,7 +49,7 @@ class AppShell extends StatelessWidget {
               labelType: NavigationRailLabelType.all,
               leading: Padding(
                 padding: const EdgeInsets.only(bottom: 24, top: 16),
-                child: Image.asset('assets/images/logo.jpg', width: 48, errorBuilder: (c,e,s) => const Icon(Icons.school, size: 48)),
+                child: Image.asset('assets/images/logo.png', width: 48, errorBuilder: (c,e,s) => const Icon(Icons.school, size: 48)),
               ),
               destinations: const [
                 NavigationRailDestination(

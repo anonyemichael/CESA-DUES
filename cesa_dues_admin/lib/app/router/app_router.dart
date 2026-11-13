@@ -54,7 +54,7 @@ class AdminRouterNotifier extends ChangeNotifier {
 
 final adminRouterNotifier = AdminRouterNotifier();
 
-/// CESA DUES Admin Portal Router.
+/// ACES DUES Admin Portal Router.
 class AppRouter {
   AppRouter._();
 

@@ -1,7 +1,7 @@
 // Application-specific exceptions with user-friendly messages.
 // Never expose raw Firebase/system errors to users.
 
-/// Base exception for CESA DUES application errors.
+/// Base exception for ACES DUES application errors.
 class AppException implements Exception {
   const AppException(this.message, {this.code, this.originalError});
 

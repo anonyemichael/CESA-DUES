@@ -1,8 +1,29 @@
 rules_version = '2';
+
+// ACES DUES — Cloud Storage rules.
+// ID photos live under idCards/{firebaseUid}/ so ownership is the signed-in uid
+// itself (no cross-service lookup). Students can write and read only their own
+// folder; admins can read any; nothing else is accessible.
 service firebase.storage {
   match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.get('admin', false) == true;
+    }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /idCards/{uid}/{fileName} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow write: if isOwner(uid)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isAdmin();
+    }
+
     match /{allPaths=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

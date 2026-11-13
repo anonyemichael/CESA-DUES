@@ -1,8 +1,119 @@
 rules_version = '2';
+
+// ACES DUES — Firestore security rules.
+//
+// Model
+//  * Students sign in with Google. Their roster record (students/{indexNumber})
+//    carries `linkedUid`, the Firebase uid that owns it.
+//  * Admins sign in through the verifyAdminLogin Cloud Function, which issues a
+//    custom token with claims { admin: true, role: 'hod' | 'financial_secretary' }.
+//    HOD is read-only; only the Financial Secretary may change data.
+//  * Payments, receipts, audit logs and OTPs are written ONLY by Cloud Functions
+//    (the Admin SDK bypasses these rules). No client can create or edit them.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return signedIn() && request.auth.token.get('admin', false) == true;
+    }
+    function isFinsec() {
+      return isAdmin() && request.auth.token.get('role', '') == 'financial_secretary';
+    }
+    function ownsStudent(indexNumber) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/students/$(indexNumber))
+        && get(/databases/$(database)/documents/students/$(indexNumber)).data.linkedUid == request.auth.uid;
+    }
+
+    // ── Students ────────────────────────────────────────────────────────
+    // Fields a student may touch on their own record. `verificationStatus` can
+    // only move to pending/unverified and never away from 'verified'; `level` can
+    // only be filled in when the roster has none.
+    function studentFieldsOk() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly(['linkedUid', 'email', 'fullName', 'level', 'updatedAt',
+                              'verificationStatus', 'verifiedAt', 'idCardUrl', 'fcmToken'])
+        && (!('verificationStatus' in changed)
+            || (resource.data.get('verificationStatus', 'unverified') != 'verified'
+                && request.resource.data.verificationStatus in ['pending', 'unverified']))
+        && (!('level' in changed) || resource.data.get('level', 0) == 0);
+    }
+
+    match /students/{indexNumber} {
+      // A student may look up their own record, or an unclaimed roster record by
+      // exact index number during onboarding. Listing the roster is admin-only,
+      // except the two self-scoped queries the app makes (by uid, by own e-mail).
+      allow get: if isAdmin()
+        || (signedIn() && (resource == null
+            || resource.data.get('linkedUid', null) == null
+            || resource.data.linkedUid == request.auth.uid));
+      allow list: if isAdmin()
+        || (signedIn() && (resource.data.get('linkedUid', null) == request.auth.uid
+            || resource.data.get('email', null) == request.auth.token.email));
+
+      allow create: if isFinsec()
+        || (signedIn()
+            && request.resource.data.linkedUid == request.auth.uid
+            && request.resource.data.verificationStatus in ['pending', 'unverified']
+            && request.resource.data.keys().hasOnly(['indexNumber', 'fullName', 'programme', 'level',
+                 'academicYear', 'linkedUid', 'email', 'verificationStatus', 'createdAt', 'updatedAt']));
+
+      allow update: if isFinsec()
+        // claim an unclaimed roster record
+        || (signedIn()
+            && resource.data.get('linkedUid', null) == null
+            && request.resource.data.linkedUid == request.auth.uid
+            && studentFieldsOk())
+        // update your own record
+        || (signedIn()
+            && resource.data.get('linkedUid', null) == request.auth.uid
+            && request.resource.data.linkedUid == request.auth.uid
+            && studentFieldsOk());
+
+      allow delete: if isFinsec();
+    }
+
+    // ── Dues ────────────────────────────────────────────────────────────
+    match /dues/{duesId} {
+      allow read: if signedIn();
+      allow write: if isFinsec();
+    }
+
+    // ── Payments & receipts (server-written) ────────────────────────────
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || ownsStudent(resource.data.studentId);
+      allow write: if false;
+    }
+    match /receipts/{receiptId} {
+      allow read: if isAdmin() || ownsStudent(resource.data.studentId);
+      allow write: if false;
+    }
+
+    // ── Notifications ───────────────────────────────────────────────────
+    // Broadcasts are readable by any signed-in user; a notification addressed to
+    // a student (studentId set) is readable only by that student.
+    match /notifications/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.targetAudience in ['all', 'level_100', 'level_200', 'level_300', 'level_400'])
+        || ownsStudent(resource.data.studentId);
+      allow create, delete: if isFinsec();
+      allow update: if isFinsec()
+        || (ownsStudent(resource.data.studentId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']));
+    }
+
+    // ── Audit trail (server-written, admin-readable) ────────────────────
+    match /auditLogs/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Everything else (admin_otps, mail, aggregates, ...) is server-only.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

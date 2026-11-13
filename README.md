@@ -1,57 +1,67 @@
-# CESA DUES System
+# ACES DUES
 
-The CESA DUES system is a comprehensive monorepo designed to manage and track departmental dues for the Computer Engineering Students' Association (CESA). It provides a robust, scalable, and secure platform catering to both students and departmental administrators.
+Dues management for the **Association of Computer Engineering Students (ACES)**, Department of
+Electrical & Computer Engineering, School of Engineering, University of Energy and Natural
+Resources (UENR), Sunyani.
 
-## System Architecture
+Students pay association dues with mobile money or card, get a digital receipt and a QR clearance
+pass. The Financial Secretary manages the roster, dues, announcements and reports. The Head of
+Department has a read-only view.
 
-The project is structured as a monorepo containing three main parts:
-- **`cesa_dues_core`**: The shared engine. Contains all Riverpod repositories, Firestore data models, serializers, and core UI theme components.
-- **`cesa_dues_student`**: The student-facing Flutter application designed for accessibility, optimized for low-end devices and slow network conditions.
-- **`cesa_dues_admin`**: The administrative Flutter application used by departmental staff (e.g., HOD, Financial Secretary) for tracking payments and managing student records.
-- **`functions/`**: The Firebase Cloud Functions backend written in TypeScript handling webhooks, payment verification, and automated tasks.
-- **`firebase/`**: Infrastructure-as-code definitions including `firestore.rules` and `firestore.indexes.json`.
+> Design, research and the full change list are in
+> [`docs/UENR_COMPUTER_ENGINEERING_PLAN.md`](docs/UENR_COMPUTER_ENGINEERING_PLAN.md).
+> Deployment steps and the verification log are in [`HANDOFF.md`](HANDOFF.md).
 
-## Features
+## Structure
 
-- **Zero-Trust Payments**: Payments are securely verified via a backend webhook using Paystack. The Firestore rules prevent direct client writes to the payment records.
-- **Admin Passwordless Authentication**: Staff and administrators authenticate securely via Email Link (OTP), eliminating the need to manage static passwords.
-- **Resilient Architecture**: Built with Riverpod for state management, Firebase for real-time data and authentication, and GoRouter for reliable navigation.
-- **Offline Persistence**: The mobile apps have offline persistence enabled, allowing users to view cached data even with poor internet connectivity.
+| Path | What it is |
+|---|---|
+| `cesa_dues_core/` | Shared package: models, repositories, constants (all brand strings live in `app_constants.dart`). |
+| `cesa_dues_student/` | Student app (Flutter: Android and web). |
+| `cesa_dues_admin/` | Admin app for the Financial Secretary and HOD (Flutter: Android and web). |
+| `functions/` | Firebase Cloud Functions (TypeScript): admin login, Paystack payments, ID verification, notifications. |
+| `firestore.rules`, `storage.rules` | Security rules, covered by `functions/test`. |
+| `branding/` | Master ACES logo. |
 
-## Repository Structure
+Folder, package and Firebase project names still say `cesa_dues`; they were kept so existing
+installs, Google sign-in and data keep working.
 
-- `/cesa_dues_student/` - Source code for the student app
-- `/cesa_dues_admin/` - Source code for the admin app
-- `/cesa_dues_core/` - Shared core library
-- `/functions/` - Cloud functions
-- `/Releases/` - Compiled APKs for direct installation
+## Identity
 
-## Deployment
+* Logo: the ACES crest in `branding/aces_logo.png`.
+* Colours: crest navy `#0A2A52` on white, with the semantic green, amber and red for payment status.
+* Receipts and references: `ACES-<year>-<id>`.
 
-### Mobile Applications
-**📥 Download the Apps:** Compiled APKs for both the student and admin applications are available to download on the [GitHub Releases Page](https://github.com/anonyemichael/CESA-DUES/releases/latest).
+## Security model
 
-You can directly download and install them on any Android device.
+* Students sign in with Google and can see only their own record, payments, receipts and messages.
+* Admins sign in with an e-mailed one-time code. Only e-mails listed in the function settings can
+  sign in; the Head of Department is read-only.
+* Payments and receipts are written only by Cloud Functions after Paystack confirms the amount.
+* ID photos are private to the student and admins. A student ID is auto-verified only when the
+  index number is read from the card; otherwise it waits for the Financial Secretary.
 
-To build the applications from source:
+## Develop
+
 ```bash
-# Student App
-cd cesa_dues_student
-flutter build apk --release --split-per-abi
+flutter pub get                       # from the repo root (Dart workspace)
+flutter analyze
+(cd cesa_dues_student && flutter test)
+(cd cesa_dues_admin && flutter test)
 
-# Admin App
-cd cesa_dues_admin
-flutter build apk --release --split-per-abi
+cd functions
+npm install
+npm run build                         # type-check and compile
+npm run test:rules                    # security rules against the Firebase emulators
 ```
 
-### Backend Setup
-1. Initialize a Firebase project and upgrade to the Blaze plan.
-2. Deploy Firestore Rules and Indexes: `firebase deploy --only firestore`
-3. Set Paystack Secret Key: `firebase functions:config:set paystack.secret="sk_live_YOUR_KEY"`
-4. Deploy Cloud Functions:
-   ```bash
-   cd functions
-   npm install
-   npm run build
-   firebase deploy --only functions
-   ```
+## Build and deploy
+
+See [`HANDOFF.md`](HANDOFF.md). In short: configure `functions/.env` and the Paystack secret,
+install the Trigger Email extension, then `firebase deploy --only firestore,storage,functions`
+and build the two apps.
+
+## Releases
+
+The GitHub release page still holds the earlier Civil-branded APKs. Build new ones with
+`flutter build apk --release --split-per-abi` in each app and publish them as a new release.

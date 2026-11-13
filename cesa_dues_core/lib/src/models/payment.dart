@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import '../constants/enums.dart';
+import '../constants/app_constants.dart';
 
 /// A payment transaction for departmental dues.
 class Payment extends Equatable {
@@ -109,7 +110,7 @@ class Payment extends Equatable {
       studentName: (data['studentName'] as String?) ?? 'Student',
       studentLevel: (data['studentLevel'] as num?)?.toInt() ?? 100,
       duesId: (data['duesId'] as String?) ?? '',
-      duesName: (data['duesName'] as String?) ?? 'CESA Dues',
+      duesName: (data['duesName'] as String?) ?? '${AppConstants.organizationName} Dues',
       academicYear: (data['academicYear'] as String?) ?? '2025/2026',
       amount: (data['amount'] as num?)?.toInt() ?? 0,
       currency: (data['currency'] as String?) ?? 'GHS',

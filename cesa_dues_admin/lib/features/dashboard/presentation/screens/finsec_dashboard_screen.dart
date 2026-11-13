@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../app/theme/app_colors.dart';
 import 'package:cesa_dues_core/cesa_dues_core.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +31,7 @@ class FinsecDashboardScreen extends ConsumerWidget {
                 children: [
                   ClipOval(
                     child: Image.asset(
-                      'assets/images/logo.jpg',
+                      'assets/images/logo.png',
                       width: 32,
                       height: 32,
                       fit: BoxFit.cover,
@@ -41,7 +42,7 @@ class FinsecDashboardScreen extends ConsumerWidget {
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('CESA DUES', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                      Text(AppConstants.appName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
                       Text('FinSec Workspace', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
                     ],
                   ),
@@ -95,7 +96,7 @@ class FinsecDashboardScreen extends ConsumerWidget {
                 width: 240,
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
-                  border: Border(right: BorderSide(color: Color(0xFF1E293B))),
+                  border: Border(right: BorderSide(color: Color(0xFF163D73))),
                 ),
                 child: _buildSidebar(context),
               ),
@@ -140,14 +141,14 @@ class FinsecDashboardScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   ClipOval(
-                    child: Image.asset('assets/images/logo.jpg', width: 44, height: 44, fit: BoxFit.cover),
+                    child: Image.asset('assets/images/logo.png', width: 44, height: 44, fit: BoxFit.cover),
                   ),
                   const SizedBox(width: 12),
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('CESA DUES', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text('Civil Engineering Dept', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                      Text(AppConstants.appName, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('${AppConstants.departmentName} • ${AppConstants.organizationName}', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     ],
                   ),
                 ],
@@ -213,20 +214,20 @@ class FinsecDashboardScreen extends ConsumerWidget {
           child: Row(
             children: [
               ClipOval(
-                child: Image.asset('assets/images/logo.jpg', width: 36, height: 36, fit: BoxFit.cover),
+                child: Image.asset('assets/images/logo.png', width: 36, height: 36, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('CESA DUES', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                  Text(AppConstants.appName, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
                   Text('FinSec Workspace', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                 ],
               ),
             ],
           ),
         ),
-        const Divider(height: 1, color: Color(0xFF1E293B)),
+        const Divider(height: 1, color: Color(0xFF163D73)),
         const SizedBox(height: 16),
         _navItem(Icons.dashboard_outlined, 'Dashboard', isSelected: true, onTap: () {}),
         _navItem(Icons.people_outline, 'Students Directory', onTap: () => context.goNamed(AppRouter.students)),
@@ -237,19 +238,23 @@ class FinsecDashboardScreen extends ConsumerWidget {
           showDialog(context: context, builder: (context) => const SendNotificationDialog());
         }),
         const Spacer(),
-        const Divider(height: 1, color: Color(0xFF1E293B)),
+        const Divider(height: 1, color: Color(0xFF163D73)),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               const CircleAvatar(radius: 16, backgroundColor: AppColors.accent, child: Text('FS', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Fin. Secretary', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                    Text('anonyemichael6@gmail.com', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10), overflow: TextOverflow.ellipsis),
+                    const Text('Fin. Secretary', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      FirebaseAuth.instance.currentUser?.email ?? '${AppConstants.organizationName} • ${AppConstants.universityShort}',
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -279,7 +284,7 @@ class FinsecDashboardScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Civil Engineering • Session 2025/2026',
+          '${AppConstants.departmentName} • Session 2025/2026',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
@@ -388,7 +393,7 @@ class FinsecDashboardScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E293B) : Colors.transparent,
+          color: isSelected ? const Color(0xFF163D73) : Colors.transparent,
           border: isSelected ? const Border(left: BorderSide(color: AppColors.accentLight, width: 3)) : null,
         ),
         child: Row(

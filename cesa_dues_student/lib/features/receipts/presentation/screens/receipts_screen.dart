@@ -110,7 +110,7 @@ class ReceiptsScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                          colors: [Color(0xFF0A2A52), Color(0xFF163D73)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -188,7 +188,7 @@ class ReceiptsScreen extends ConsumerWidget {
         : 'Confirmed';
     final receiptNo = (payment.receiptId != null && payment.receiptId!.isNotEmpty)
         ? payment.receiptId!
-        : 'CESA-REC-${payment.id.length >= 8 ? payment.id.substring(0, 8).toUpperCase() : payment.id.toUpperCase()}';
+        : '${AppConstants.receiptPrefix}-REC-${payment.id.length >= 8 ? payment.id.substring(0, 8).toUpperCase() : payment.id.toUpperCase()}';
 
     return Container(
       decoration: BoxDecoration(
@@ -197,7 +197,7 @@ class ReceiptsScreen extends ConsumerWidget {
         border: Border.all(color: const Color(0xFFA7F3D0), width: 1.5),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.04),
+            color: Color.fromRGBO(10, 42, 82, 0.04),
             offset: Offset(0, 3),
             blurRadius: 10,
           ),
@@ -210,7 +210,7 @@ class ReceiptsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
-              color: Color(0xFF0F172A),
+              color: Color(0xFF0A2A52),
               borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: Row(
@@ -221,7 +221,7 @@ class ReceiptsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'CESA UENR • CIVIL ENGINEERING',
+                        '${AppConstants.organizationName} ${AppConstants.universityShort} • ${AppConstants.departmentNameUpper}',
                         style: TextStyle(
                           color: Color(0xFF94A3B8),
                           fontSize: 9,
@@ -366,7 +366,7 @@ class ReceiptsScreen extends ConsumerWidget {
                 Icon(Icons.shield_outlined, size: 12, color: AppColors.textSecondary),
                 SizedBox(width: 6),
                 Text(
-                  'Officially Authenticated • Civil Engineering Dept. UENR',
+                  'Officially Authenticated • ${AppConstants.associationFullName}, ${AppConstants.universityShort}',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 10,

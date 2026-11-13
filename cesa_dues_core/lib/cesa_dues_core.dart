@@ -1,4 +1,4 @@
-// CESA DUES Core Package
+// ACES DUES Core Package
 //
 // Shared models, constants, services, validators, and utilities
 // used by both the Student App and Admin Portal.

@@ -1,143 +1,101 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import vision from "@google-cloud/vision";
-import axios from "axios";
+import { requireUser, setCors, studentForUid } from "./auth";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
-const visionClient = new vision.ImageAnnotatorClient();
 
 /**
  * verifyStudentIdOcr
- * 
- * HTTP Endpoint with Cloud Vision OCR + Resilient Roster Fallback.
- * Scans the student ID image and approves the account without 500 errors.
+ *
+ * Reads the signed-in student's own ID-card photo from Cloud Storage and runs
+ * Cloud Vision OCR. The student is auto-verified ONLY when their index number is
+ * found on the card. Anything else (unreadable photo, Vision unavailable, index
+ * not found) is sent to the Financial Secretary for manual approval; it is never
+ * auto-approved.
  */
 export const verifyStudentIdOcr = functions.https.onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
+  setCors(res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
   }
 
   try {
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const student = await studentForUid(user.uid);
+    if (!student) {
+      res.status(200).json({ data: { success: false, verified: false, reason: "No student profile is linked to this account." } });
+      return;
+    }
+    const indexNumber = student.id;
     const body = req.body?.data || req.body || {};
-    const imageUrl = body.imageUrl;
-    const indexNumber = (body.indexNumber || "").toUpperCase().trim();
+    const imageUrl = String(body.imageUrl || "");
+    const storagePath = `idCards/${user.uid}/id_photo.jpg`;
 
-    if (!imageUrl || !indexNumber) {
-      res.status(200).json({
-        data: {
-          success: false,
-          verified: false,
-          reason: "Both Image URL and Index Number are required for verification.",
-        }
-      });
-      return;
-    }
-
-    // 1. Fetch student record from Firestore
-    const studentDoc = await db.collection("students").doc(indexNumber).get();
-    let studentName = "";
-    if (studentDoc.exists) {
-      studentName = (studentDoc.data()?.fullName || "").toUpperCase();
-    }
-
-    let isVerified = true;
-    let ocrExtractedText = "";
-    let verificationMethod = "google_cloud_vision_ocr";
-
-    // 2. Attempt OCR with Google Cloud Vision
+    let imageBuffer: Buffer;
     try {
-      console.log(`Downloading image buffer for student: ${indexNumber}...`);
-      const imgResponse = await axios.get(imageUrl, { responseType: "arraybuffer", timeout: 10000 });
-      const imageBuffer = Buffer.from(imgResponse.data);
-
-      console.log(`Running Cloud Vision text detection for ${indexNumber}...`);
-      const [result] = await visionClient.textDetection({
-        image: { content: imageBuffer },
-      });
-
-      const detections = result.textAnnotations || [];
-      if (detections.length > 0 && detections[0].description) {
-        ocrExtractedText = detections[0].description.toUpperCase();
-        console.log(`OCR Text Detected: ${ocrExtractedText.substring(0, 150)}...`);
-
-        const cleanOcr = ocrExtractedText.replace(/[\s\-_/.]/g, "");
-        const cleanIndex = indexNumber.replace(/[\s\-_/.]/g, "");
-
-        const hasIndex = cleanOcr.includes(cleanIndex) || ocrExtractedText.includes(indexNumber);
-        const hasKeywords =
-          ocrExtractedText.includes("UENR") ||
-          ocrExtractedText.includes("ENERGY") ||
-          ocrExtractedText.includes("STUDENT") ||
-          ocrExtractedText.includes("IDENTITY") ||
-          ocrExtractedText.includes("ENGINEERING") ||
-          ocrExtractedText.includes("CARD");
-
-        if (!hasIndex && !hasKeywords) {
-          isVerified = false;
-        }
-      }
-    } catch (visionErr: any) {
-      console.warn("Cloud Vision API call note:", visionErr.message);
-      // If Vision API is unconfigured on the project, fallback to instant automated approval
-      verificationMethod = "automated_digital_id_scan";
-      isVerified = true;
-    }
-
-    if (!isVerified) {
-      res.status(200).json({
-        data: {
-          success: false,
-          verified: false,
-          reason: `Index Number "${indexNumber}" or official UENR student card markers were not detected on this image. Please upload a clear photo of your student ID.`,
-        }
-      });
+      [imageBuffer] = await admin.storage().bucket().file(storagePath).download();
+    } catch {
+      res.status(200).json({ data: { success: false, verified: false, reason: "We could not find your uploaded ID photo. Please upload it again." } });
       return;
     }
 
-    // 3. Mark student as verified in Firestore
-    await db.collection("students").doc(indexNumber).set({
-      verificationStatus: "verified",
-      idCardUrl: imageUrl,
-      ocrDetectedTextPreview: ocrExtractedText ? ocrExtractedText.substring(0, 200) : "verified",
-      verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-      verificationMethod: verificationMethod,
+    let verified = false;
+    let method = "cloud_vision_ocr";
+    let ocrPreview = "";
+    try {
+      const client = new vision.ImageAnnotatorClient();
+      const [result] = await client.textDetection({ image: { content: imageBuffer } });
+      const text = (result.textAnnotations?.[0]?.description || "").toUpperCase();
+      ocrPreview = text.substring(0, 200);
+      const clean = (s: string) => s.replace(/[\s\-_/.]/g, "");
+      verified = clean(text).includes(clean(indexNumber));
+    } catch (visionErr: any) {
+      console.warn("Cloud Vision unavailable, routing to manual review:", visionErr.message);
+      method = "manual_review_vision_unavailable";
+    }
+
+    const update: Record<string, unknown> = {
+      verificationStatus: verified ? "verified" : "pending",
+      idCardPath: storagePath,
+      verificationMethod: method,
+      ocrDetectedTextPreview: ocrPreview,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    };
+    if (imageUrl.startsWith("https://firebasestorage.googleapis.com/")) update.idCardUrl = imageUrl;
+    if (verified) update.verifiedAt = admin.firestore.FieldValue.serverTimestamp();
+    await db.collection("students").doc(indexNumber).set(update, { merge: true });
 
-    // 4. Log audit trail
-    await db.collection("audit_logs").add({
-      action: "STUDENT_ID_VERIFIED",
+    await db.collection("auditLogs").add({
+      actor: indexNumber,
+      actorRole: "student",
+      action: verified ? "student_verified" : "student_modified",
       target: indexNumber,
+      targetType: "student",
+      metadata: { method, autoVerified: verified },
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      details: {
-        imageUrl: imageUrl,
-        method: verificationMethod,
-      },
     });
 
-    res.status(200).json({
-      data: {
-        success: true,
-        verified: true,
-        message: `Student ID verified successfully for ${studentName || indexNumber}!`,
-      }
-    });
+    if (verified) {
+      res.status(200).json({ data: { success: true, verified: true, message: "Student ID verified." } });
+    } else {
+      res.status(200).json({
+        data: {
+          success: true,
+          verified: false,
+          pending: true,
+          reason: "We could not confirm your index number automatically. Your ID was sent to the department for manual approval.",
+        },
+      });
+    }
   } catch (error: any) {
-    console.error("General Verification Error:", error);
-    res.status(200).json({
-      data: {
-        success: false,
-        verified: false,
-        reason: `Verification error: ${error.message || "Could not process verification"}`,
-      }
-    });
+    console.error("verifyStudentIdOcr error:", error);
+    res.status(200).json({ data: { success: false, verified: false, reason: "Verification failed. Please try again." } });
   }
 });

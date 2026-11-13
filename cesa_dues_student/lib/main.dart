@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cesa_dues_core/cesa_dues_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,7 +29,7 @@ void main() async {
   );
 }
 
-/// CESA DUES Student Application.
+/// ACES DUES Student Application.
 class CesaDuesStudentApp extends ConsumerWidget {
   const CesaDuesStudentApp({super.key});
 
@@ -37,7 +38,7 @@ class CesaDuesStudentApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     
     return MaterialApp.router(
-      title: 'CESA DUES',
+      title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,

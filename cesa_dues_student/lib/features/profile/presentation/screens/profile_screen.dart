@@ -76,14 +76,14 @@ class ProfileScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+              colors: [Color(0xFF0A2A52), Color(0xFF163D73)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.2),
+                color: const Color(0xFF0A2A52).withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -229,8 +229,9 @@ class ProfileScreen extends ConsumerWidget {
             _buildDetailRow('Email', (student.email != null && student.email!.isNotEmpty) ? student.email! : 'Connected via Google'),
             if (student.phone != null && student.phone!.isNotEmpty)
               _buildDetailRow('Phone', student.phone!),
-            _buildDetailRow('Department', 'Civil Engineering'),
-            _buildDetailRow('Institution', 'UENR Sunyani'),
+            _buildDetailRow('Association', AppConstants.associationFullName),
+            _buildDetailRow('Department', AppConstants.departmentFullName),
+            _buildDetailRow('Institution', '${AppConstants.universityShort}, ${AppConstants.campus}'),
           ],
         ),
         const SizedBox(height: 24),
@@ -239,7 +240,7 @@ class ProfileScreen extends ConsumerWidget {
         OutlinedButton.icon(
           onPressed: () => _handleSignOut(context, ref),
           icon: const Icon(Icons.logout_rounded, size: 16, color: AppColors.error),
-          label: const Text('Sign Out from CESA Portal', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 13)),
+          label: const Text('Sign Out from ${AppConstants.organizationName} Portal', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 13)),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.errorBorder),
             backgroundColor: AppColors.errorLight,

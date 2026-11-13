@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// CESA DUES Admin Portal Theme — Material 3.
+/// ACES DUES Admin Portal Theme — Material 3.
 /// Same design system as student app, adapted for web dashboard layout.
 class AppTheme {
   AppTheme._();

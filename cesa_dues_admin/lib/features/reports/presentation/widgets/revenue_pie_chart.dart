@@ -108,7 +108,7 @@ class RevenuePieChart extends StatelessWidget {
                   Flexible(
                     child: Text(
                       name,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF163D73)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

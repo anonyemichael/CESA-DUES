@@ -86,9 +86,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         indexNumber: indexNumber,
         uid: authUser.uid,
         email: email,
-        fullName: fullName.isNotEmpty ? fullName : (authUser.displayName ?? 'Civil Engineering Student'),
+        fullName: fullName.isNotEmpty ? fullName : (authUser.displayName ?? AppConstants.defaultStudentName),
         level: _selectedLevel,
-        programme: 'BSc. Civil Engineering',
+        programme: AppConstants.programmeName,
       );
 
       // Refresh student provider
@@ -118,7 +118,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Student Setup', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+        title: const Text('Student Setup', style: TextStyle(color: Color(0xFF0A2A52), fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFF64748B)),
@@ -187,14 +187,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A2A52),
                           letterSpacing: -0.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Link your Google account with your official departmental Index Number.',
+                        'Link your Google account with your official ${AppConstants.universityShort} Index Number.',
                         style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                         textAlign: TextAlign.center,
                       ),
@@ -216,7 +216,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               Expanded(
                                 child: Text(
                                   user!.email!,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF163D73)),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -287,7 +287,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       // Submit & Proceed Button
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
+                          backgroundColor: const Color(0xFF0A2A52),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

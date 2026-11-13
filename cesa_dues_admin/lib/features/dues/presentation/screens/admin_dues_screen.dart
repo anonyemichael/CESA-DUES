@@ -68,14 +68,14 @@ class AdminDuesScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      colors: [Color(0xFF0A2A52), Color(0xFF163D73)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.2),
+                        color: const Color(0xFF0A2A52).withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -221,7 +221,7 @@ class AdminDuesScreen extends ConsumerWidget {
         border: Border.all(color: isDuesActive ? AppColors.primary.withValues(alpha: 0.15) : AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.04),
+            color: Color.fromRGBO(10, 42, 82, 0.04),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),

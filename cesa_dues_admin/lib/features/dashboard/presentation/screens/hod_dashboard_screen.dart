@@ -39,7 +39,7 @@ class _HodDashboardScreenState extends ConsumerState<HodDashboardScreen> {
         title: Row(
           children: [
             ClipOval(
-              child: Image.asset('assets/images/logo.jpg', width: 32, height: 32, fit: BoxFit.cover),
+              child: Image.asset('assets/images/logo.png', width: 32, height: 32, fit: BoxFit.cover),
             ),
             const SizedBox(width: 10),
             const Text('HOD Portal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
@@ -63,7 +63,7 @@ class _HodDashboardScreenState extends ConsumerState<HodDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Department of Civil Engineering', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              const Text(AppConstants.departmentFullName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
               const Text('Official Academic Session 2025/2026', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               const SizedBox(height: 20),
 

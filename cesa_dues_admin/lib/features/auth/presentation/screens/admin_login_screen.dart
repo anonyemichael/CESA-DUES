@@ -16,7 +16,7 @@ class AdminLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
-  final _emailController = TextEditingController(text: 'anonyemichael6@gmail.com');
+  final _emailController = TextEditingController();
   final _otpController = TextEditingController();
   
   bool _otpSent = false;
@@ -38,14 +38,14 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     }
 
     final success = await ref.read(adminAuthControllerProvider.notifier).requestOtp(email);
-    
-    if (mounted) {
+
+    if (success && mounted) {
       setState(() {
         _otpSent = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login code generated for $email (Test code: 123456)'),
+          content: Text('A 6-digit login code has been e-mailed to $email.'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -83,7 +83,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
           final error = state.error;
           final message = error is AppException
               ? error.message
-              : 'Authentication error. Use 123456 as code.';
+              : 'Authentication error. Please try again.';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
@@ -137,7 +137,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                         ),
                         child: ClipOval(
                           child: Image.asset(
-                            'assets/images/logo.jpg',
+                            'assets/images/logo.png',
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: AppColors.primary.withOpacity(0.1),
@@ -149,7 +149,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'CESA DUES',
+                      AppConstants.appName,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w800,
@@ -159,7 +159,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Department Admin Portal',
+                      '${AppConstants.associationFullName} • Admin Portal',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
@@ -201,14 +201,14 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Official Department Email',
+                        'Official Admin Email',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _emailController,
                         decoration: const InputDecoration(
-                          hintText: 'anonyemichael6@gmail.com',
+                          hintText: 'finsec@aces.uenr.edu.gh',
                           prefixIcon: Icon(Icons.email_outlined, size: 20),
                           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                         ),
@@ -247,7 +247,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Code generated for ${_emailController.text}\n(Test code: 123456)',
+                                'Enter the code sent to ${_emailController.text}. It expires in ${AppConstants.otpExpiryMinutes} minutes.',
                                 style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.w500),
                               ),
                             ),
@@ -263,7 +263,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       TextField(
                         controller: _otpController,
                         decoration: InputDecoration(
-                          hintText: 'Enter 6-digit code (e.g. 123456)',
+                          hintText: 'Enter the 6-digit code',
                           prefixIcon: const Icon(Icons.password_outlined, size: 20),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           suffixIcon: IconButton(

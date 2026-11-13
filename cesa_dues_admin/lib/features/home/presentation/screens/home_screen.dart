@@ -174,14 +174,14 @@ class HomeScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          colors: [Color(0xFF0A2A52), Color(0xFF163D73)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.08),
+            color: Color.fromRGBO(10, 42, 82, 0.08),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -311,7 +311,7 @@ class HomeScreen extends ConsumerWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromRGBO(15, 23, 42, 0.02),
+            color: Color.fromRGBO(10, 42, 82, 0.02),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -379,7 +379,7 @@ class HomeScreen extends ConsumerWidget {
           border: Border.all(color: AppColors.border),
           boxShadow: const [
             BoxShadow(
-              color: Color.fromRGBO(15, 23, 42, 0.02),
+              color: Color.fromRGBO(10, 42, 82, 0.02),
               blurRadius: 4,
               offset: Offset(0, 2),
             ),
